@@ -1,8 +1,12 @@
 import SwiftUI
 import AVFoundation
+import Speech
 
 struct WordLearningView: View {
     let word: Word
+    @StateObject private var checker = SpeechPronunciationChecker()
+    @State private var isRecording = false
+    @State private var showResult = false
     private var player: AVAudioPlayer? {
         guard let url = Bundle.main.url(forResource: word.audioName, withExtension: "mp3") else { return nil }
         return try? AVAudioPlayer(contentsOf: url)
@@ -12,21 +16,41 @@ struct WordLearningView: View {
         VStack(spacing: 20) {
             Text(word.text)
                 .font(.largeTitle)
+            Text(word.translation)
+                .font(.title3)
             Image(word.imageName)
                 .resizable()
                 .scaledToFit()
                 .frame(height: 200)
-            Button(action: {
-                player?.play()
-            }) {
-                Image(systemName: "speaker.wave.2.fill")
-                    .font(.largeTitle)
+            HStack(spacing: 40) {
+                Button(action: {
+                    player?.play()
+                }) {
+                    Image(systemName: "speaker.wave.2.fill")
+                        .font(.largeTitle)
+                }
+                Button(action: {
+                    if isRecording {
+                        checker.stopRecognition()
+                        isRecording = false
+                        showResult = true
+                    } else {
+                        try? checker.startRecognition()
+                        isRecording = true
+                    }
+                }) {
+                    Image(systemName: isRecording ? "mic.fill" : "mic")
+                        .font(.largeTitle)
+                }
             }
             Text(word.sentence)
                 .font(.title2)
                 .padding()
         }
         .padding()
+        .alert(isPresented: $showResult) {
+            Alert(title: Text("你的發音"), message: Text(checker.recognizedText), dismissButton: .default(Text("OK")))
+        }
     }
 }
 
@@ -35,7 +59,8 @@ struct WordLearningView_Previews: PreviewProvider {
         let sample = Word(text: "apple",
                           imageName: "apple_image",
                           audioName: "apple_sound",
-                          sentence: "I eat an apple.")
+                          sentence: "I eat an apple.",
+                          translation: "蘋果")
         WordLearningView(word: sample)
     }
 }

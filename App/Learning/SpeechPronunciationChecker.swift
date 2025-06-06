@@ -1,9 +1,24 @@
 import Foundation
+#if canImport(Combine)
+import Combine
+#endif
+#if canImport(Speech) && canImport(AVFoundation)
 import Speech
 import AVFoundation
-import Combine
+#endif
+
+#if !canImport(Combine)
+protocol ObservableObject: AnyObject {}
+@propertyWrapper struct Published<Value> {
+    var wrappedValue: Value
+    init(wrappedValue: Value) {
+        self.wrappedValue = wrappedValue
+    }
+}
+#endif
 
 /// 提供語音辨識來檢查使用者發音是否正確
+#if canImport(Speech) && canImport(AVFoundation)
 class SpeechPronunciationChecker: NSObject, ObservableObject {
     @Published var recognizedText: String = ""
 
@@ -53,3 +68,19 @@ class SpeechPronunciationChecker: NSObject, ObservableObject {
         recognitionTask = nil
     }
 }
+#else
+/// A fallback implementation used when the Speech framework is unavailable.
+class SpeechPronunciationChecker: ObservableObject {
+    @Published var recognizedText: String = ""
+
+    /// Dummy start method for non-Apple platforms.
+    func startRecognition() throws {
+        // In environments without the Speech framework we simply
+        // indicate that recognition is unsupported.
+        recognizedText = ""
+    }
+
+    /// Stop recognition - no-op in the fallback case.
+    func stopRecognition() {}
+}
+#endif

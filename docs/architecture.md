@@ -28,9 +28,12 @@ Childlearn/
 │   └── architecture.md
 ├── App/
 │   ├── Learning/
+│   │   ├── Word.swift
+│   │   └── WordLearningView.swift
 │   ├── Interaction/
 │   └── Review/
 └── README.md
 ```
 
-此檔案將隨著專案進度持續更新。
+目前 `Learning` 資料夾中提供一個簡單的 `Word` 模型與 `WordLearningView` 範例畫面，
+示範如何呈現單字、圖片、發音與例句。此檔案將隨著專案進度持續更新。

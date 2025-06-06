@@ -1,11 +1,17 @@
 import SwiftUI
 import AVFoundation
+#if canImport(Speech)
 import Speech
+#endif
 
 struct WordLearningView: View {
     let word: Word
 
     @State private var player: AVAudioPlayer?
+    @StateObject private var checker = SpeechPronunciationChecker()
+    @State private var isRecording = false
+    @State private var showResult = false
+
     private let ttsService = GoogleNotebookTTSService()
 
     private func loadAudio() {
@@ -20,14 +26,6 @@ struct WordLearningView: View {
                 }
             }
         }
-
-    @StateObject private var checker = SpeechPronunciationChecker()
-    @State private var isRecording = false
-    @State private var showResult = false
-    private var player: AVAudioPlayer? {
-        guard let url = Bundle.main.url(forResource: word.audioName, withExtension: "mp3") else { return nil }
-        return try? AVAudioPlayer(contentsOf: url)
-
     }
 
     var body: some View {
@@ -41,17 +39,9 @@ struct WordLearningView: View {
                 .scaledToFit()
                 .frame(height: 200)
 
-            Button(action: {
-                if player == nil {
-                    loadAudio()
-                }
-                player?.play()
-            }) {
-                Image(systemName: "speaker.wave.2.fill")
-                    .font(.largeTitle)
-=======
             HStack(spacing: 40) {
                 Button(action: {
+                    if player == nil { loadAudio() }
                     player?.play()
                 }) {
                     Image(systemName: "speaker.wave.2.fill")
@@ -70,29 +60,33 @@ struct WordLearningView: View {
                     Image(systemName: isRecording ? "mic.fill" : "mic")
                         .font(.largeTitle)
                 }
-
             }
+
             Text(word.sentence)
                 .font(.title2)
                 .padding()
         }
         .padding()
-
         .onAppear(perform: loadAudio)
-
         .alert(isPresented: $showResult) {
-            Alert(title: Text("你的發音"), message: Text(checker.recognizedText), dismissButton: .default(Text("OK")))
+            Alert(
+                title: Text("你的發音"),
+                message: Text(checker.recognizedText),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
 }
 
 struct WordLearningView_Previews: PreviewProvider {
     static var previews: some View {
-        let sample = Word(text: "apple",
-                          imageName: "apple_image",
-                          audioName: "apple_sound",
-                          sentence: "I eat an apple.",
-                          translation: "蘋果")
+        let sample = Word(
+            text: "apple",
+            imageName: "apple_image",
+            audioName: "apple_sound",
+            sentence: "I eat an apple.",
+            translation: "蘋果"
+        )
         WordLearningView(word: sample)
     }
 }

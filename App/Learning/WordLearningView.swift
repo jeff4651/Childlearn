@@ -3,9 +3,21 @@ import AVFoundation
 
 struct WordLearningView: View {
     let word: Word
-    private var player: AVAudioPlayer? {
-        guard let url = Bundle.main.url(forResource: word.audioName, withExtension: "mp3") else { return nil }
-        return try? AVAudioPlayer(contentsOf: url)
+    @State private var player: AVAudioPlayer?
+    private let ttsService = GoogleNotebookTTSService()
+
+    private func loadAudio() {
+        if let url = Bundle.main.url(forResource: word.audioName, withExtension: "mp3"),
+           let audio = try? AVAudioPlayer(contentsOf: url) {
+            self.player = audio
+        } else {
+            ttsService.synthesizeAudio(for: word.text) { data in
+                guard let data = data else { return }
+                DispatchQueue.main.async {
+                    self.player = try? AVAudioPlayer(data: data)
+                }
+            }
+        }
     }
 
     var body: some View {
@@ -17,6 +29,9 @@ struct WordLearningView: View {
                 .scaledToFit()
                 .frame(height: 200)
             Button(action: {
+                if player == nil {
+                    loadAudio()
+                }
                 player?.play()
             }) {
                 Image(systemName: "speaker.wave.2.fill")
@@ -27,6 +42,7 @@ struct WordLearningView: View {
                 .padding()
         }
         .padding()
+        .onAppear(perform: loadAudio)
     }
 }
 
